@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=Oh Please
+Comment=Minimalist, high-performance TUI text editor
+Exec=opls %F
+Terminal=false
+Type=Application
+Icon=text-editor
+Categories=Utility;TextEditor;Development;
+Keywords=Text;Editor;TUI;Terminal;Go;
+MimeType=text/plain;text/x-go;text/x-python;text/x-css;text/x-html;application/javascript;text/x-c;text/x-c++;
+StartupNotify=true
+Actions=NewWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=opls
