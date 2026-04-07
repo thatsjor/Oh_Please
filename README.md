@@ -62,6 +62,11 @@ step 3
 ```bash
 chmod +x ~/.local/bin/opls
 ```
+step 4
+```bash
+cp opls.desktop /usr/share/applications/
+sudo update-desktop-database
+```
 Make sure that you have ~/.local/bin/ on PATH so you can launch in your terminal by typing `opls`.
 
 Works with file paths in your launch command.
