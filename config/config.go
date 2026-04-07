@@ -15,24 +15,22 @@ type Config struct {
 func NewConfig() *Config {
 	return &Config{
 		Keys: map[string][]string{
-			"save":         {"ctrl+s"},
-			"close_tab":    {"ctrl+w"},
-			"next_tab":     {"ctrl+f", "alt+right"},
-			"prev_tab":     {"ctrl+b", "alt+left"},
-			"quit":         {"ctrl+q", "ctrl+c", "esc"},
-			"switch_focus": {"tab"},
-			"up":           {"up", "k"},
-			"down":         {"down", "j"},
-			"enter":        {"enter"},
+			"save":          {"ctrl+s"},
+			"close_tab":     {"ctrl+w"},
+			"next_tab":      {"ctrl+f", "alt+right"},
+			"prev_tab":      {"ctrl+b", "alt+left"},
+			"quit":          {"ctrl+q", "ctrl+c", "esc"},
+			"switch_focus":  {"tab"},
+			"up":            {"up", "k"},
+			"down":          {"down", "j"},
+			"enter":         {"enter"},
 			"toggle_hidden": {"."},
-			"toggle_zen":   {"ctrl+z"},
-			"new_file":     {"ctrl+n"},
+			"toggle_zen":    {"ctrl+z"},
+			"new_file":      {"ctrl+n"},
 		},
 	}
 }
 
-// GetUserHome attempts to find the real user's home directory, 
-// even if running via sudo.
 func GetUserHome() string {
 	if sudoUser := os.Getenv("SUDO_USER"); sudoUser != "" {
 		if u, err := user.Lookup(sudoUser); err == nil {
