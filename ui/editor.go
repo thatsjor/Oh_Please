@@ -64,6 +64,9 @@ func (m *EditorModel) OpenFile(path string) (error, tea.Cmd) {
 	ta.CharLimit = 0
 	ta.SetValue(string(content))
 
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Bold(true)
+
 	ta.SetWidth(m.Width)
 	taHeight := m.Height - 4
 	if taHeight < 1 {
@@ -142,7 +145,7 @@ func (m *EditorModel) getTabBounds() []int {
 	bounds := []int{}
 	currentX := 0
 
-	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("2")).Padding(0, 1)
+	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("4")).Padding(0, 1)
 	inactiveTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Background(lipgloss.Color("8")).Padding(0, 1)
 	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 
@@ -154,14 +157,18 @@ func (m *EditorModel) getTabBounds() []int {
 			fg = activeTabStyle.GetForeground()
 		}
 
-		base := lipgloss.NewStyle().Background(bg).Foreground(fg).Padding(0, 1)
-		indicator := " "
+		style := lipgloss.NewStyle().Background(bg).Foreground(fg)
+		
+		var indicator string
 		if t.Modified {
 			indicator = modifiedDotStyle.Copy().Background(bg).Render("•")
+		} else {
+			indicator = style.Render(" ")
 		}
 
-		name := fmt.Sprintf(" %s%s [x] ", indicator, filepath.Base(t.FilePath))
-		tabWidth := lipgloss.Width(base.Render(name))
+		name := style.Render(fmt.Sprintf("%s [x] ", filepath.Base(t.FilePath)))
+		tabContent := lipgloss.JoinHorizontal(lipgloss.Top, " ", indicator, name)
+		tabWidth := lipgloss.Width(tabContent)
 		currentX += tabWidth
 		bounds = append(bounds, currentX)
 	}
@@ -290,7 +297,7 @@ func (m EditorModel) View() string {
 	}
 
 	tabBarStyle := lipgloss.NewStyle().MarginBottom(1)
-	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("2")).Padding(0, 1)
+	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("4")).Padding(0, 1)
 	inactiveTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Background(lipgloss.Color("8")).Padding(0, 1)
 	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 
@@ -303,18 +310,19 @@ func (m EditorModel) View() string {
 			fg = activeTabStyle.GetForeground()
 		}
 
-		base := lipgloss.NewStyle().Background(bg).Foreground(fg).Padding(0, 1)
+		style := lipgloss.NewStyle().Background(bg).Foreground(fg)
 
 		var indicator string
 		if t.Modified {
 			indicator = modifiedDotStyle.Copy().Background(bg).Render("•")
 		} else {
-			indicator = " "
+			indicator = style.Render(" ")
 		}
 
 		fileName := filepath.Base(t.FilePath)
-		tabContent := fmt.Sprintf(" %s%s [x] ", indicator, fileName)
-		tabsStr = append(tabsStr, base.Render(tabContent))
+		name := style.Render(fmt.Sprintf("%s [x] ", fileName))
+		tabContent := lipgloss.JoinHorizontal(lipgloss.Top, style.Render(" "), indicator, name)
+		tabsStr = append(tabsStr, tabContent)
 	}
 
 	tabBar := tabBarStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, tabsStr...))

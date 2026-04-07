@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Oh Please
 Comment=Minimalist, high-performance TUI text editor
-Exec=opls %F
+Exec=foot -e opls %F
 Terminal=false
 Type=Application
 Icon=text-editor
@@ -13,4 +13,4 @@ Actions=NewWindow;
 
 [Desktop Action NewWindow]
 Name=New Window
-Exec=opls
+Exec=foot -e opls
