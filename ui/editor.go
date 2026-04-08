@@ -147,7 +147,7 @@ func (m *EditorModel) getTabBounds() []int {
 
 	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("4")).Padding(0, 1)
 	inactiveTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Background(lipgloss.Color("8")).Padding(0, 1)
-	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
+	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Bold(true)
 
 	for i, t := range m.Tabs {
 		bg := inactiveTabStyle.GetBackground()
@@ -299,7 +299,7 @@ func (m EditorModel) View() string {
 	tabBarStyle := lipgloss.NewStyle().MarginBottom(1)
 	activeTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("4")).Padding(0, 1)
 	inactiveTabStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Background(lipgloss.Color("8")).Padding(0, 1)
-	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
+	modifiedDotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Bold(true)
 
 	var tabsStr []string
 	for i, t := range m.Tabs {
