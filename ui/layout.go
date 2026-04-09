@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -90,7 +91,21 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ZenMode = !m.ZenMode
 			m.Editor.SetZenMode(m.ZenMode)
 			m.resizeChildren()
-			return m, nil
+			m.Editor.SetActive(true) // Ensure keyboard focus is maintained
+			
+			var mouseCmd tea.Cmd
+			if m.ZenMode {
+				mouseCmd = func() tea.Msg {
+					fmt.Print("\x1b[?1002l")
+					return nil
+				}
+			} else {
+				mouseCmd = func() tea.Msg {
+					fmt.Print("\x1b[?1002h")
+					return nil
+				}
+			}
+			return m, mouseCmd
 		}
 		if m.Config.IsAction("quit", key) {
 			return m, tea.Quit
@@ -110,6 +125,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.Config.IsAction("save", key) {
 				m.Editor.SaveFile()
 				return m, nil
+			}
+			if m.Config.IsAction("root_save", key) {
+				return m, m.Editor.SudoSave()
 			}
 			var cmd tea.Cmd
 			m.Editor, cmd = m.Editor.Update(msg)
@@ -146,6 +164,18 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Sidebar.SetActive(false)
 		m.Editor.SetActive(true)
 		return m, cmd
+	case SudoSaveResultMsg:
+		if msg.Error != nil {
+			m.Editor.SetStatus(fmt.Sprintf("Sudo Save Failed: %v", msg.Error), true)
+		} else {
+			m.Editor.SetStatus(fmt.Sprintf("Saved as Root: %s", filepath.Base(msg.Path)), false)
+			for i := range m.Editor.Tabs {
+				if m.Editor.Tabs[i].FilePath == msg.Path {
+					m.Editor.Tabs[i].Modified = false
+				}
+			}
+		}
+		return m, nil
 	}
 
 	return m, nil

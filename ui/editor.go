@@ -3,9 +3,12 @@ package ui
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"opls/config"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -26,6 +29,9 @@ type EditorModel struct {
 	Height      int
 	ZenMode     bool
 	Config      *config.Config
+	Status      string
+	StatusErr   bool
+	StatusTime  time.Time
 }
 
 func NewEditor(cfg *config.Config) EditorModel {
@@ -67,6 +73,9 @@ func (m *EditorModel) OpenFile(path string) (error, tea.Cmd) {
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Bold(true)
 
+	// Use standard word jumps for alt keys
+	ta.KeyMap = textarea.DefaultKeyMap
+
 	ta.SetWidth(m.Width)
 	taHeight := m.Height - 4
 	if taHeight < 1 {
@@ -101,8 +110,55 @@ func (m *EditorModel) SaveFile() error {
 	err := os.WriteFile(tab.FilePath, []byte(tab.TextArea.Value()), 0644)
 	if err == nil {
 		tab.Modified = false
+		m.SetStatus(fmt.Sprintf("Saved: %s", filepath.Base(tab.FilePath)), false)
+	} else {
+		if os.IsPermission(err) {
+			m.SetStatus("Permission Denied (Use Ctrl+R to save as root)", true)
+		} else {
+			m.SetStatus(fmt.Sprintf("Error: %v", err), true)
+		}
 	}
 	return err
+}
+
+func (m *EditorModel) SetStatus(msg string, isErr bool) {
+	m.Status = msg
+	m.StatusErr = isErr
+	m.StatusTime = time.Now()
+}
+
+func (m *EditorModel) SudoSave() tea.Cmd {
+	if m.ActiveIndex < 0 || m.ActiveIndex >= len(m.Tabs) {
+		return nil
+	}
+	tab := &m.Tabs[m.ActiveIndex]
+	content := tab.TextArea.Value()
+
+	// Create a temp file
+	tmpFile, err := os.CreateTemp("", "opls_sudo_*")
+	if err != nil {
+		m.SetStatus(fmt.Sprintf("Temp file error: %v", err), true)
+		return nil
+	}
+	tmpPath := tmpFile.Name()
+	tmpFile.Write([]byte(content))
+	tmpFile.Close()
+
+	// Prepare the command
+	c := exec.Command("sudo", "cp", tmpPath, tab.FilePath)
+	
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		os.Remove(tmpPath)
+		if err != nil {
+			return SudoSaveResultMsg{Error: err}
+		}
+		return SudoSaveResultMsg{Path: tab.FilePath}
+	})
+}
+
+type SudoSaveResultMsg struct {
+	Path  string
+	Error error
 }
 
 func (m *EditorModel) CloseTab(index int) {
@@ -194,7 +250,7 @@ func (m EditorModel) Update(msg tea.Msg) (EditorModel, tea.Cmd) {
 		return m, nil
 
 	case tea.MouseMsg:
-		if !m.Active {
+		if !m.Active || m.ZenMode {
 			return m, nil
 		}
 		if msg.Y == 1 && msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
@@ -272,11 +328,38 @@ func (m EditorModel) Update(msg tea.Msg) (EditorModel, tea.Cmd) {
 	}
 
 	if m.ActiveIndex >= 0 && m.ActiveIndex < len(m.Tabs) {
-		oldValue := m.Tabs[m.ActiveIndex].TextArea.Value()
+		tab := &m.Tabs[m.ActiveIndex]
+		oldValue := tab.TextArea.Value()
+		
+		if km, ok := msg.(tea.KeyMsg); ok {
+			ks := km.String()
+			
+			// Map Shift+Arrows to fast movement
+			if strings.Contains(ks, "shift+") {
+				baseKey := strings.Replace(ks, "shift+", "", 1)
+				switch baseKey {
+				case "right":
+					msg = tea.KeyMsg{Type: tea.KeyRight, Alt: true} // Word Right
+				case "left":
+					msg = tea.KeyMsg{Type: tea.KeyLeft, Alt: true} // Word Left
+				case "up":
+					for i := 0; i < 8; i++ {
+						tab.TextArea, _ = tab.TextArea.Update(tea.KeyMsg{Type: tea.KeyUp})
+					}
+					return m, nil
+				case "down":
+					for i := 0; i < 8; i++ {
+						tab.TextArea, _ = tab.TextArea.Update(tea.KeyMsg{Type: tea.KeyDown})
+					}
+					return m, nil
+				}
+			}
+		}
+
 		var cmd tea.Cmd
-		m.Tabs[m.ActiveIndex].TextArea, cmd = m.Tabs[m.ActiveIndex].TextArea.Update(msg)
-		if m.Tabs[m.ActiveIndex].TextArea.Value() != oldValue {
-			m.Tabs[m.ActiveIndex].Modified = true
+		tab.TextArea, cmd = tab.TextArea.Update(msg)
+		if tab.TextArea.Value() != oldValue {
+			tab.Modified = true
 		}
 		return m, cmd
 	}
@@ -327,5 +410,8 @@ func (m EditorModel) View() string {
 
 	tabBar := tabBarStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, tabsStr...))
 
+	// Note: We avoid JoinVertical for status to keep the layout stable.
+	// Status/Selections can be displayed in a non-disruptive way if needed.
+	
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, originalView)
 }

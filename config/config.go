@@ -27,6 +27,7 @@ func NewConfig() *Config {
 			"toggle_hidden": {"."},
 			"toggle_zen":    {"ctrl+z"},
 			"new_file":      {"ctrl+n"},
+			"root_save":     {"ctrl+r"},
 		},
 	}
 }
@@ -36,6 +37,9 @@ func GetUserHome() string {
 		if u, err := user.Lookup(sudoUser); err == nil {
 			return u.HomeDir
 		}
+	}
+	if home := os.Getenv("HOME"); home != "" {
+		return home
 	}
 	home, _ := os.UserHomeDir()
 	return home

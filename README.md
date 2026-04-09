@@ -44,6 +44,7 @@ new_file = ctrl+n
 - **Ctrl+f / Alt+Right**: Next tab.
 - **Ctrl+b / Alt+Left**: Previous tab.
 - **Ctrl+q / Esc**: Quit.
+- **Ctrl+r**: Save as Root (Elevated).
 - **Enter**: Open selected file or directory in the sidebar.
 
 ## Installation
@@ -56,18 +57,18 @@ go build -o opls
 ```
 step 2
 ```bash
-mv ./opls ~/.local/bin/opls
+sudo mv ./opls /usr/local/bin/opls
 ```
 step 3
 ```bash
-chmod +x ~/.local/bin/opls
+sudo chmod +x /usr/local/bin/opls
 ```
 step 4
 ```bash
 cp opls.desktop /usr/share/applications/
 sudo update-desktop-database
 ```
-Make sure that you have ~/.local/bin/ on PATH so you can launch in your terminal by typing `opls`.
+Installing to `/usr/local/bin/` ensures that `sudo opls` works correctly across your system.
 
 Works with file paths in your launch command.
 
