@@ -73,7 +73,6 @@ func (m *EditorModel) OpenFile(path string) (error, tea.Cmd) {
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Bold(true)
 
-	// Use standard word jumps for alt keys
 	ta.KeyMap = textarea.DefaultKeyMap
 
 	ta.SetWidth(m.Width)
@@ -146,7 +145,7 @@ func (m *EditorModel) SudoSave() tea.Cmd {
 
 	// Prepare the command
 	c := exec.Command("sudo", "cp", tmpPath, tab.FilePath)
-	
+
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		os.Remove(tmpPath)
 		if err != nil {
@@ -214,7 +213,7 @@ func (m *EditorModel) getTabBounds() []int {
 		}
 
 		style := lipgloss.NewStyle().Background(bg).Foreground(fg)
-		
+
 		var indicator string
 		if t.Modified {
 			indicator = modifiedDotStyle.Copy().Background(bg).Render("•")
@@ -330,10 +329,10 @@ func (m EditorModel) Update(msg tea.Msg) (EditorModel, tea.Cmd) {
 	if m.ActiveIndex >= 0 && m.ActiveIndex < len(m.Tabs) {
 		tab := &m.Tabs[m.ActiveIndex]
 		oldValue := tab.TextArea.Value()
-		
+
 		if km, ok := msg.(tea.KeyMsg); ok {
 			ks := km.String()
-			
+
 			// Map Shift+Arrows to fast movement
 			if strings.Contains(ks, "shift+") {
 				baseKey := strings.Replace(ks, "shift+", "", 1)
@@ -410,8 +409,5 @@ func (m EditorModel) View() string {
 
 	tabBar := tabBarStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, tabsStr...))
 
-	// Note: We avoid JoinVertical for status to keep the layout stable.
-	// Status/Selections can be displayed in a non-disruptive way if needed.
-	
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, originalView)
 }
