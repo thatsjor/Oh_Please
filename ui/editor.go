@@ -68,6 +68,7 @@ func (m *EditorModel) OpenFile(path string) (error, tea.Cmd) {
 		ta.Prompt = "┃ "
 	}
 	ta.CharLimit = 0
+	ta.MaxHeight = 0 // bubbles default is 99 lines, which blocks Enter past that
 	ta.SetValue(string(content))
 
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
